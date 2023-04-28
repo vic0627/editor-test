@@ -1,4 +1,4 @@
-import { createDOM } from "./createDOM";
+import { createDOM } from "../createDOM/createDOM";
 
 export const imageBlockCreate = (src) => {
   const editor = document.querySelector(".ql-editor");

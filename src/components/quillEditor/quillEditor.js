@@ -1,12 +1,6 @@
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 
-const toolbarOptions = [
-  [{ header: [1, 2, 3, false] }],
-  ["bold", "italic", "underline", "strike"],
-  [{ align: "" }, { align: "center" }, { align: "right" }],
-  [{ indent: "-1" }, { indent: "+1" }],
-];
 
 export const quillInit = (toolbarOptions) =>
   new Quill("#editor", {

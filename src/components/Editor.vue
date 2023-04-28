@@ -238,6 +238,7 @@ export default {
     // input change 事件，將圖片轉為 base64 帶入到函式中
     imageInputChange(event) {
       const file = event.target.files[0];
+      if (!file) return;
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {

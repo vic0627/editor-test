@@ -113,6 +113,17 @@
             margin: 40px 0 24px;
         }
 
+        .h1-placeholder::before,
+        .p-placeholder::before {
+            content: "標題";
+            color: rgb(160, 164, 168);
+            pointer-events: none;
+        }
+
+        .p-placeholder::before {
+            content: "開始書寫";
+        }
+
         .img-block {
             width: 350px;
             height: 237px;

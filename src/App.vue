@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <Editor @transport-html="transportHTML" />
+    <Editor @transportContent="transportContent" />
   </div>
 </template>
 
@@ -11,6 +11,7 @@ export default {
   name: "App",
   data() {
     return {
+      title: "",
       html_content: "",
     };
   },
@@ -18,13 +19,20 @@ export default {
     Editor,
   },
   methods: {
-    transportHTML(ql) {
-      this.html_content = ql;
+    transportContent({ html_content, title }) {
+      this.title = title;
+      this.html_content = html_content;
     },
+  },
+  updated() {
+    console.log(this.title + this.html_content);
   },
   watch: {
     html_content(n) {
-      // console.log(n);
+      console.log(n);
+    },
+    title(n) {
+      console.log(n);
     },
   },
 };

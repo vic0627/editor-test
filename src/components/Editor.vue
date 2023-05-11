@@ -2,6 +2,7 @@
   <div class="quillWrapper">
     <div
       class="ql-toolbar"
+      id="ql-toolbar"
       ref="qlToolbar"
       @mouseover="tooltipHandler"
       @mouseleave="visible = 0"
@@ -12,14 +13,14 @@
           id="ql-undo"
           @click="historyHandler('undo')"
         >
-          <UndoSvg :disable="undoDisable" />
+          <UndoSvg :disable="undoList" />
         </button>
         <button
           class="ql-redo"
           id="ql-redo"
           @click="historyHandler('redo')"
         >
-          <RedoSvg :disable="redoDisable" />
+          <RedoSvg :disable="redoList" />
         </button>
       </span>
       <span class="ql-formats">
@@ -108,8 +109,8 @@
       id="editor"
       @click="clickHandler"
     >
-      <h1>標題</h1>
-      <p>開始書寫</p>
+      <h1><br /></h1>
+      <p><br /></p>
     </div>
     <image-viewer
       v-if="showViewer"
@@ -147,13 +148,6 @@ export default {
     ImageViewer,
     Tooltip,
   },
-  // 父層所傳的 props，存放內容。
-  props: {
-    html_content: {
-      type: String,
-      default: "",
-    },
-  },
   data() {
     return {
       // 編輯器實例
@@ -177,6 +171,10 @@ export default {
       },
       // tooltip 目標物
       targetBlock: targetBlockInit(),
+      // 標題
+      title: "",
+      // 內容
+      html_content: "",
     };
   },
   mounted() {
@@ -185,13 +183,16 @@ export default {
     // 獲取編輯器本體
     this.ql_editor = document.querySelector(".ql-editor");
     // 編輯器掛載監聽，用 emit 將內容送上去父組件
-    this.quill.on("editor-change", () =>
-      this.$emit("transport-html", this.ql_editor.innerHTML)
+    this.quill.on(
+      "editor-change",
+      () => (this.html_content = this.ql_editor.innerHTML)
     );
+    this.placeholder();
   },
   beforeDestroy() {
-    this.quill.off("editor-change", () =>
-      this.$emit("transport-html", this.ql_editor.innerHTML)
+    this.quill.off(
+      "editor-change",
+      () => (this.html_content = this.ql_editor.innerHTML)
     );
   },
   methods: {
@@ -199,13 +200,14 @@ export default {
     historyHandler(type) {
       this.quill.history[type]();
     },
-    // 事件代理去抓編輯器內的圖片，有抓到就打開 imageViewer
+    // 編輯器事件代理
     clickHandler(e) {
-      const src = e.target.src || e.target.firstChild.src;
-      if (!src) return;
+      const t = e.target;
+      if (t.nodeName.toLowerCase() !== "img") return;
+      const src = t.src;
       this.previewSrcList = [src];
-      document.body.style.overflow = "hidden";
       this.showViewer = true;
+      document.body.style.overflow = "hidden";
     },
     closeViewer() {
       document.body.style.overflow = "";
@@ -218,7 +220,7 @@ export default {
       while (!target.id) {
         target = target.parentNode;
       }
-      if (target.id === "app") return (this.visible = 0);
+      if (target.id === "ql-toolbar") return (this.visible = 0);
       // 根據目標物列判斷是否顯示 tooltip，如需顯示就同步改變顯示、內容、位置
       this.targetBlock.forEach((val) => {
         if (target.id === val.id) {
@@ -239,13 +241,14 @@ export default {
     imageInputChange(event) {
       const file = event.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        imageBlockCreate(reader.result);
-      };
+      console.log(file);
+      // const reader = new FileReader();
+      // reader.readAsDataURL(file);
+      // reader.onload = () => {
+      //   imageBlockCreate(reader.result);
+      // };
     },
-    // 在 updated 週期調用，抓取圖片陣列，且判斷抓取的圖片是否為編輯器內的圖片
+    // 抓取圖片陣列，且判斷抓取的圖片是否為編輯器內的圖片
     imageRecreate() {
       const imgs = [...document.querySelectorAll(".ql-img")];
       const wildImgs = document.getElementsByTagName("img");
@@ -256,15 +259,56 @@ export default {
       }
       this.imgBlocks = imgs;
     },
+    keepTitle() {
+      const title = this.ql_editor.firstChild;
+
+      // 標題審查機制
+      title.innerText.trim().length
+        ? (this.title = title.innerText.trim())
+        : (this.title = "未命名標題");
+
+      // 確保首節點永遠為 h1
+      if (title.nodeName.toLowerCase() === "h1") return;
+      const h1 = document.createElement("h1");
+      h1.innerText = title.innerText;
+      title.replaceWith(h1);
+    },
+    // 確保節點數量不小於2
+    keepContent() {
+      if (this.ql_editor.childNodes.length < 2) {
+        this.ql_editor.appendChild(document.createElement("p"));
+      }
+    },
+    // 輸入欄位的 placeholder
+    placeholder() {
+      const childNodes = this.ql_editor.childNodes;
+      const title = childNodes[0];
+      const content = childNodes[1];
+      title.innerHTML === "<br>"
+        ? title.classList.add("h1-placeholder")
+        : title.classList.remove("h1-placeholder");
+      content.innerHTML === "<br>" && childNodes.length < 3
+        ? content.classList.add("p-placeholder")
+        : childNodes.forEach((el, i) => {
+            if (i > 0) el.classList.remove("p-placeholder");
+          });
+    },
+    // 把資料送上去
+    emitContent() {
+      this.$emit("transportContent", {
+        title: this.title,
+        html_content: this.html_content,
+      });
+    },
   },
   computed: {
     // quill history API，把 undo、redo 陣列長度丟到 svg 子組件做判斷
-    undoDisable() {
+    undoList() {
       if (!this.quill) return;
       const { undo } = this.quill.history.stack;
       return undo.length;
     },
-    redoDisable() {
+    redoList() {
       if (!this.quill) return;
       const { redo } = this.quill.history.stack;
       return redo.length;
@@ -281,9 +325,13 @@ export default {
         }
       });
     },
-  },
-  updated() {
-    this.imageRecreate();
+    html_content() {
+      this.keepTitle();
+      this.keepContent();
+      this.imageRecreate();
+      this.placeholder();
+      this.emitContent();
+    },
   },
 };
 </script>

@@ -16,31 +16,42 @@
         <div class="file-type">{{ val.type }}</div>
       </div>
     </div>
-    <button>上傳</button>
+    <button @click="handleClick">上傳</button>
   </div>
 </template>
 
 <script>
-import missionList from "./bigDataUpload/missionList";
 export default {
   name: "Upload",
   data() {
     return {
       fileList: [],
-      missionList: new missionList({
+      uploadFile: null,
+    };
+  },
+  created() {
+    this.uploadFile = this.$bigdataUpload.setUploadMission({
+      missionInfo: {
         auth_id: 969,
         stp_id: "A6.1",
         proj_id: "1069",
         code_type: "A-SE-",
         fileTo: "STP_IMPORT",
-      }),
-    };
+      },
+      sliceInfo: {
+        sliceSize: 1,
+        sliceUnit: "MB",
+      },
+    });
   },
   methods: {
     handleChange(e) {
       this.fileList = e.target.files;
-      this.missionList.createAwaitList(this.fileList);
-      this.missionList.setStorageList();
+      this.uploadFile.missionList.createAwaitList(this.fileList);
+      this.uploadFile.missionList.setStorageList();
+    },
+    handleClick() {
+      return this.uploadFile.getUploadKey();
     },
   },
 };

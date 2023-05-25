@@ -1,12 +1,12 @@
 import { LOCAL_SET } from "./localStorage";
 export default class missionList {
-  constructor(options, sliceSize) {
+  constructor(options, sliceInfo) {
     const { auth_id, stp_id, proj_id, code_type, fileTo } = options;
     const infoNotComplete =
       !auth_id || !stp_id || !proj_id || !code_type || !fileTo;
     if (infoNotComplete)
       throw new ReferenceError("上傳資訊不完整! 請確認參數是否設置正確!");
-    this.sliceSize = sliceSize ?? (1024 * 1024) / 2;
+    this.sliceSize = this.transformSliceInfo(sliceInfo);
     this.options = options;
     this.auth_id = auth_id;
     this.stp_id = stp_id;
@@ -86,5 +86,17 @@ export default class missionList {
     delete mission.chunks.find((chunk) => chunk.chunk_id === chunk_id);
     mission.completedList[chunk_id] = true;
     this.setStorageList();
+  }
+  transformSliceInfo({ sliceSize, sliceUnit = "B" }) {
+    const units = ["B", "KB", "MB", "GB"];
+    const n = units.findIndex((e) => e === sliceUnit);
+    if (n === -1)
+      throw new TypeError(
+        `可使用單位為"B"、"KB"、"MB"、"GB"，請重新設定單位。`
+      );
+    else return sliceSize * Math.pow(1024, n);
+  }
+  getMission(index){
+    return this.awaitList[index]
   }
 }

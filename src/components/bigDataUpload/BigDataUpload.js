@@ -12,7 +12,6 @@ class BigDataUpload {
   }
   setUploadMission({ missionInfo, sliceInfo }) {
     this.missionList = new missionList(missionInfo, sliceInfo);
-    console.log(this.missionList);
     return this;
   }
   async getUploadKey() {
@@ -38,12 +37,10 @@ class BigDataUpload {
         },
       }
     );
-    if (data) {
-      const { id, uploadKey } = data.data;
-      awaitList[0].id = id;
-      awaitList[0].uploadKey = uploadKey;
-      this.missionList.setStorageList();
-    }
+    const { id, uploadKey } = data.data;
+    awaitList[0].id = id;
+    awaitList[0].uploadKey = uploadKey;
+    this.missionList.setStorageList();
   }
 }
 const bigDataUpload = (api) => new BigDataUpload(api);

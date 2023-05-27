@@ -1,16 +1,8 @@
 <template>
   <div>
-    <input
-      type="file"
-      multiple
-      @change="handleChange"
-    />
+    <input type="file" multiple @change="handleChange" />
     <div class="file-list">
-      <div
-        class="file-item"
-        v-for="(val, idx) in fileList"
-        :key="idx"
-      >
+      <div class="file-item" v-for="(val, idx) in fileList" :key="idx">
         <div class="file-name">{{ val.name }}</div>
         <div class="file-size">{{ val.size }}</div>
         <div class="file-type">{{ val.type }}</div>
@@ -47,10 +39,10 @@ export default {
   methods: {
     handleChange(e) {
       this.fileList = e.target.files;
-      this.uploadFile.missionList.createAwaitList(this.fileList);
-      this.uploadFile.missionList.setStorageList();
     },
     handleClick() {
+      this.uploadFile.missionList.createAwaitList(this.fileList);
+      this.uploadFile.missionList.setStorageList();
       return this.uploadFile.getUploadKey();
     },
   },

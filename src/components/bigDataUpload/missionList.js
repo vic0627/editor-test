@@ -1,4 +1,4 @@
-import { LOCAL_SET } from "./localStorage";
+import { LOCAL_GET, LOCAL_SET } from "./localStorage";
 export default class missionList {
   constructor(options, sliceInfo) {
     const { auth_id, stp_id, proj_id, code_type, fileTo } = options;
@@ -33,24 +33,19 @@ export default class missionList {
       throw new TypeError("非 File 物件不可建立任務!");
     const { name, size } = file;
     const fileSplitCount = Math.ceil(size / this.sliceSize);
+    const createArray = (fn) => Array.from({ length: fileSplitCount }, fn);
     const mission = {
       fileName: name,
       fileTotalSize: size,
       fileSplitCount,
       id: null,
       uploadKey: null,
-      completedList: Array.from({ length: fileSplitCount }, () => false),
-      chunks: (() => {
-        const b = [];
-        for (let i = 0; i < fileSplitCount; i++) {
-          b.push({
-            theFile: this.createChunk(file, i, this.sliceSize),
-            isLastChunk: false,
-            chunk_id: i,
-          });
-        }
-        return b;
-      })(),
+      completedList: createArray(() => false),
+      chunks: createArray((_, i) => ({
+        theFile: this.createChunk(file, i, this.sliceSize),
+        isLastChunk: false,
+        chunk_id: i,
+      })),
     };
     this.awaitList.push(mission);
   }
@@ -79,6 +74,9 @@ export default class missionList {
   setStorageList() {
     LOCAL_SET("missionList", this.createStorageList());
   }
+  getStorageList() {
+    return JSON.parse(LOCAL_GET("missionList"));
+  }
   finishUploadChunk(uploadKey, chunk_id) {
     const mission = this.awaitList.find(
       (mission) => mission.uploadKey === uploadKey
@@ -96,7 +94,7 @@ export default class missionList {
       );
     else return sliceSize * Math.pow(1024, n);
   }
-  getMission(index){
-    return this.awaitList[index]
+  getMission(index) {
+    return this.awaitList[index];
   }
 }

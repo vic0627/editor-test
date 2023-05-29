@@ -1,8 +1,16 @@
 <template>
   <div>
-    <input type="file" multiple @change="handleChange" />
+    <input
+      type="file"
+      multiple
+      @change="handleChange"
+    />
     <div class="file-list">
-      <div class="file-item" v-for="(val, idx) in fileList" :key="idx">
+      <div
+        class="file-item"
+        v-for="(val, idx) in fileList"
+        :key="idx"
+      >
         <div class="file-name">{{ val.name }}</div>
         <div class="file-size">{{ val.size }}</div>
         <div class="file-type">{{ val.type }}</div>
@@ -26,8 +34,8 @@ export default {
       missionInfo: {
         auth_id: 969,
         stp_id: "A6.1",
-        proj_id: "1069",
-        code_type: "A-SE-",
+        proj_id: "206",
+        code_type: "A-SB-",
         fileTo: "STP_IMPORT",
       },
       sliceInfo: {
@@ -42,8 +50,9 @@ export default {
     },
     handleClick() {
       this.uploadFile.missionList.createAwaitList(this.fileList);
-      this.uploadFile.missionList.setStorageList();
-      return this.uploadFile.getUploadKey();
+      this.uploadFile.missionList.mergeStorageList();
+      this.uploadFile.startUpload();
+      // return this.uploadFile.getUploadKey();
     },
   },
 };

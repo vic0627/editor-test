@@ -1,4 +1,4 @@
-import { LOCAL_GET, LOCAL_SET } from "./localStorage";
+import { LOCAL_GET, LOCAL_REMOVE, LOCAL_SET } from "./localStorage";
 export default class missionList {
   constructor(options, sliceInfo) {
     const { auth_id, stp_id, proj_id, code_type, fileTo } = options;
@@ -49,6 +49,17 @@ export default class missionList {
     };
     this.awaitList.push(mission);
   }
+  lastChunk(completedList) {
+    return completedList.findIndex((val, i) => {
+      if (
+        val === false &&
+        completedList.slice(i + 1).every((v) => v === true)
+      ) {
+        return true;
+      }
+      return false;
+    });
+  }
   createAwaitList(fileList) {
     if (!(fileList instanceof FileList))
       throw new TypeError("非 FileList 物件不可建立任務清單!");
@@ -57,8 +68,8 @@ export default class missionList {
       this.createMission(fileList.item(i));
     }
   }
-  createStorageList() {
-    return JSON.stringify({
+  createStorageList(type = "string") {
+    const sl = {
       auth_id: this.auth_id,
       stp_id: this.stp_id,
       proj_id: this.proj_id,
@@ -69,13 +80,63 @@ export default class missionList {
         delete o.chunks;
         return o;
       }),
-    });
+    };
+    return type === "string" ? JSON.stringify(sl) : sl;
   }
   setStorageList() {
-    LOCAL_SET("missionList", this.createStorageList());
+    if (this.awaitList.length)
+      LOCAL_SET("missionList", this.createStorageList());
+    else LOCAL_REMOVE("missionList");
   }
   getStorageList() {
     return JSON.parse(LOCAL_GET("missionList"));
+  }
+  compareStorageList() {
+    const previousList = this.getStorageList();
+    if (!previousList)
+      return {
+        previousList: null,
+        isSameCondition: false,
+      };
+    const presentList = this.createStorageList("");
+    const isSameCondition =
+      previousList.auth_id === presentList.auth_id &&
+      previousList.stp_id === presentList.stp_id &&
+      previousList.proj_id === presentList.proj_id &&
+      previousList.code_type === presentList.code_type &&
+      previousList.fileTo === presentList.fileTo;
+    return {
+      previousList,
+      presentList,
+      isSameCondition,
+    };
+  }
+  mergeStorageList() {
+    const { previousList, isSameCondition } = this.compareStorageList();
+    if (isSameCondition) {
+      const { awaitList } = previousList;
+      const preserveList = awaitList.filter((mission) => {
+        return (
+          mission.id &&
+          mission.uploadKey &&
+          this.awaitList.find(
+            (val) =>
+              val.fileName === mission.fileName &&
+              val.fileTotalSize === mission.fileTotalSize &&
+              val.fileSplitCount === mission.fileSplitCount
+          )
+        );
+      });
+      preserveList.forEach((mission) => {
+        const sameMission = this.awaitList.find(
+          (m) => m.fileName === mission.fileName
+        );
+        sameMission.id = mission.id;
+        sameMission.uploadKey = mission.uploadKey;
+        sameMission.completedList = mission.completedList;
+      });
+    }
+    this.setStorageList();
   }
   finishUploadChunk(uploadKey, chunk_id) {
     const mission = this.awaitList.find(
